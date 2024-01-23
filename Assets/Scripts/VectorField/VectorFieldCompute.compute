@@ -1,0 +1,30 @@
+#pragma kernel CSMain
+
+RWTexture2D<float4> Result;
+RWBuffer<float4> VectorFieldPositions;
+uint2 TextureSize;
+int Radius;
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float2 size = float2(Radius, Radius);
+    float4 avgColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    int count = 0;
+
+    for(int height =-size.y; height <= size.y; height++)
+    {
+        for(int width =-size.x; width <= size.x; width++)
+        {
+            const int2 sampleID = int2(id.x + width, id.y + height);
+            if(sampleID.x < 0 || sampleID.x >= TextureSize.x || sampleID.y < 0 || sampleID.y >= TextureSize.y)
+                continue;
+
+            avgColor += Result[uint2(sampleID.x, sampleID.y)];
+            count++;
+        }
+    }
+    
+    avgColor /= count;
+    Result[id.xy] = avgColor;
+}
